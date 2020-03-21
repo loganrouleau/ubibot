@@ -1,0 +1,23 @@
+{
+  "name": "ubibot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "dependencies": {
+    "influx": "^5.5.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChendiWang/ubibot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChendiWang/ubibot/issues"
+  },
+  "homepage": "https://github.com/ChendiWang/ubibot#readme"
+}
