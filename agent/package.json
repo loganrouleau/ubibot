@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "dependencies": {
-    "influx": "^5.5.1"
+    "influx": "5.5.1"
   },
   "devDependencies": {},
   "scripts": {
@@ -16,8 +16,5 @@
   },
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/ChendiWang/ubibot/issues"
-  },
   "homepage": "https://github.com/ChendiWang/ubibot#readme"
 }
