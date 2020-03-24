@@ -17,7 +17,7 @@ const loadData = () => {
           mode: "lines",
           name: "Temperature",
           x: unpackData(parsedResponse, "time"),
-          y: unpackData(parsedResponse, "temp"),
+          y: unpackData(parsedResponse, "temp_val"),
           line: { color: "#17BECF" }
         }
       ];
