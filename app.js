@@ -1,15 +1,41 @@
+const bodyParser = require("body-parser");
+const express = require("express");
 const Influx = require("influx");
 const net = require("net");
+const path = require("path");
+
 const influxDbAddress = "http://localhost:8086";
 const testDb = "test";
 const testMeasurement = "bot_reading";
 const influx = new Influx.InfluxDB(influxDbAddress);
+
+const app = express();
+app.use(bodyParser.json());
+app.use(
+  bodyParser.urlencoded({
+    extended: true
+  })
+);
+app.use(express.static(path.join(__dirname, "public")));
+app.set("port", 3000);
 
 initializeTestDb();
 
 setInterval(function() {
   run();
 }, 5000);
+
+app.listen(app.get("port"), () => {
+  console.log(`Listening on ${app.get("port")}.`);
+});
+
+app.get("/api/temperature", (request, response) => {
+  let statement = "select * from " + testDb + ".." + testMeasurement;
+  influx
+    .query(statement, { database: testDb })
+    .then(result => response.status(200).json(result))
+    .catch(error => response.status(500).json({ error }));
+});
 
 async function run() {
   let data = await getReading();
