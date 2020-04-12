@@ -1,1 +1,3 @@
 # ubibot
+
+`node app.js`
