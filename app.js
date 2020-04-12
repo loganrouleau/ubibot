@@ -13,6 +13,15 @@ const testMeasurement = "bot_reading";
 const influx = new Influx.InfluxDB(influxDbAddress);
 const channelId = 12859;
 const apiReadKey = properties.get("api.read.key");
+const fieldName = {
+  created_at: "timestamp",
+  field1: "temp_val",
+  field2: "humi_val",
+  field3: "light_val",
+  field4: "power_vol_val",
+  field5: "rssi",
+  field6: "mag_val",
+};
 
 const app = express();
 app.use(bodyParser.json());
@@ -26,9 +35,10 @@ app.set("port", 3000);
 
 initializeTestDb();
 
+run();
 setInterval(function () {
   run();
-}, 5000);
+}, 10000);
 
 app.listen(app.get("port"), () => {
   console.log(`Listening on ${app.get("port")}.`);
@@ -44,7 +54,7 @@ app.get("/api/temperature", (request, response) => {
 
 async function run() {
   let data = await getReading();
-  console.log(data);
+  writeToDb(data);
 }
 
 async function getReading() {
@@ -60,31 +70,23 @@ async function getReading() {
   return dataJson;
 }
 
-function getSerialReading() {
-  return new Promise((resolve, reject) => {
-    var socket = net.connect(5001, "localhost");
-    socket.setEncoding("utf8");
-    socket.on("data", (data) => {
-      socket.destroy();
-      resolve(data);
-    });
-    socket.write('{"command":"CheckSensors"}');
-  });
-}
-
 async function writeToDb(data) {
-  let fields = JSON.parse(data);
+  let fields = data.feeds[2];
   let timestamp = Date.parse(fields.created_at) * 1000000;
   delete fields.created_at;
+
+  Object.keys(fields).forEach((oldKey) => {
+    fields[fieldName[oldKey]] = fields[oldKey];
+    delete fields[oldKey];
+  });
   console.log(fields);
-  console.log(timestamp);
   await influx.writePoints(
     [
       {
         measurement: testMeasurement,
         fields: fields,
-        //timestamp: timestamp
-        timestamp: Date.now() * 1000000,
+        timestamp: timestamp,
+        //timestamp: Date.now() * 1000000,
       },
     ],
     { database: testDb }
@@ -119,4 +121,16 @@ async function dropTestDb() {
   if (names.includes(testDb)) {
     await influx.dropDatabase(testDb);
   }
+}
+
+function getSerialReading() {
+  return new Promise((resolve, reject) => {
+    var socket = net.connect(5001, "localhost");
+    socket.setEncoding("utf8");
+    socket.on("data", (data) => {
+      socket.destroy();
+      resolve(data);
+    });
+    socket.write('{"command":"CheckSensors"}');
+  });
 }
