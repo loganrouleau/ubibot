@@ -1,0 +1,166 @@
+warning: CRLF will be replaced by LF in package-lock.json.
+The file will have its original line endings in your working directory
+warning: CRLF will be replaced by LF in package.json.
+The file will have its original line endings in your working directory
+[1mdiff --git a/app.js b/app.js[m
+[1mindex 73202f8..2648ae4 100644[m
+[1m--- a/app.js[m
+[1m+++ b/app.js[m
+[36m@@ -1,19 +1,24 @@[m
+ const bodyParser = require("body-parser");[m
+ const express = require("express");[m
+[32m+[m[32mconst fetch = require("node-fetch");[m
+ const Influx = require("influx");[m
+ const net = require("net");[m
+ const path = require("path");[m
+[32m+[m[32mconst PropertiesReader = require("properties-reader");[m
+[32m+[m[32mconst properties = PropertiesReader("app.properties");[m
+ [m
+ const influxDbAddress = "http://localhost:8086";[m
+ const testDb = "test";[m
+ const testMeasurement = "bot_reading";[m
+ const influx = new Influx.InfluxDB(influxDbAddress);[m
+[32m+[m[32mconst channelId = 12859;[m
+[32m+[m[32mconst apiReadKey = properties.get("api.read.key");[m
+ [m
+ const app = express();[m
+ app.use(bodyParser.json());[m
+ app.use([m
+   bodyParser.urlencoded({[m
+[31m-    extended: true[m
+[32m+[m[32m    extended: true,[m
+   })[m
+ );[m
+ app.use(express.static(path.join(__dirname, "public")));[m
+[36m@@ -21,7 +26,7 @@[m [mapp.set("port", 3000);[m
+ [m
+ initializeTestDb();[m
+ [m
+[31m-setInterval(function() {[m
+[32m+[m[32msetInterval(function () {[m
+   run();[m
+ }, 5000);[m
+ [m
+[36m@@ -33,20 +38,33 @@[m [mapp.get("/api/temperature", (request, response) => {[m
+   let statement = "select * from " + testDb + ".." + testMeasurement;[m
+   influx[m
+     .query(statement, { database: testDb })[m
+[31m-    .then(result => response.status(200).json(result))[m
+[31m-    .catch(error => response.status(500).json({ error }));[m
+[32m+[m[32m    .then((result) => response.status(200).json(result))[m
+[32m+[m[32m    .catch((error) => response.status(500).json({ error }));[m
+ });[m
+ [m
+ async function run() {[m
+   let data = await getReading();[m
+[31m-  await writeToDb(data);[m
+[32m+[m[32m  console.log(data);[m
+ }[m
+ [m
+[31m-function getReading() {[m
+[32m+[m[32masync function getReading() {[m
+[32m+[m[32m  let data = await fetch([m
+[32m+[m[32m    "https://api.ubibot.io/channels/" +[m
+[32m+[m[32m      channelId +[m
+[32m+[m[32m      "/feeds.json?" +[m
+[32m+[m[32m      new URLSearchParams({[m
+[32m+[m[32m        api_key: apiReadKey,[m
+[32m+[m[32m      })[m
+[32m+[m[32m  );[m
+[32m+[m[32m  let dataJson = await data.json();[m
+[32m+[m[32m  return dataJson;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mfunction getSerialReading() {[m
+   return new Promise((resolve, reject) => {[m
+     var socket = net.connect(5001, "localhost");[m
+     socket.setEncoding("utf8");[m
+[31m-    socket.on("data", data => {[m
+[32m+[m[32m    socket.on("data", (data) => {[m
+       socket.destroy();[m
+       resolve(data);[m
+     });[m
+[36m@@ -66,8 +84,8 @@[m [masync function writeToDb(data) {[m
+         measurement: testMeasurement,[m
+         fields: fields,[m
+         //timestamp: timestamp[m
+[31m-        timestamp: Date.now() * 1000000[m
+[31m-      }[m
+[32m+[m[32m        timestamp: Date.now() * 1000000,[m
+[32m+[m[32m      },[m
+     ],[m
+     { database: testDb }[m
+   );[m
+[36m@@ -90,9 +108,9 @@[m [masync function initializeTestDb() {[m
+       acce_yval: Influx.FieldType.FLOAT,[m
+       acce_zval: Influx.FieldType.FLOAT,[m
+       mag_val: Influx.FieldType.FLOAT,[m
+[31m-      ext_temp_val: Influx.FieldType.FLOAT[m
+[32m+[m[32m      ext_temp_val: Influx.FieldType.FLOAT,[m
+     },[m
+[31m-    tags: [][m
+[32m+[m[32m    tags: [],[m
+   });[m
+ }[m
+ [m
+[1mdiff --git a/package-lock.json b/package-lock.json[m
+[1mindex 3eb3b20..f02f9a1 100644[m
+[1m--- a/package-lock.json[m
+[1m+++ b/package-lock.json[m
+[36m@@ -2620,6 +2620,14 @@[m
+       "resolved": "https://registry.npmjs.org/minimist/-/minimist-1.2.5.tgz",[m
+       "integrity": "sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw=="[m
+     },[m
+[32m+[m[32m    "mkdirp": {[m
+[32m+[m[32m      "version": "0.5.5",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/mkdirp/-/mkdirp-0.5.5.tgz",[m
+[32m+[m[32m      "integrity": "sha512-NKmAlESf6jMGym1++R0Ra7wvhV+wFW63FaSOFPwRahvea0gMUcGUhVeAg/0BC0wiv9ih5NYPB1Wn1UEI1/L+xQ==",[m
+[32m+[m[32m      "requires": {[m
+[32m+[m[32m        "minimist": "^1.2.5"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+     "monotone-convex-hull-2d": {[m
+       "version": "1.0.1",[m
+       "resolved": "https://registry.npmjs.org/monotone-convex-hull-2d/-/monotone-convex-hull-2d-1.0.1.tgz",[m
+[36m@@ -2791,6 +2799,11 @@[m
+         "double-bits": "^1.1.0"[m
+       }[m
+     },[m
+[32m+[m[32m    "node-fetch": {[m
+[32m+[m[32m      "version": "2.6.0",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.0.tgz",[m
+[32m+[m[32m      "integrity": "sha512-8dG4H5ujfvFiqDmVu9fQ5bOHUC15JMjMY/Zumv26oOvvVJjM67KF8koCWIabKQ1GJIa9r2mMZscBq/TbdOcmNA=="[m
+[32m+[m[32m    },[m
+     "normalize-svg-path": {[m
+       "version": "0.1.0",[m
+       "resolved": "https://registry.npmjs.org/normalize-svg-path/-/normalize-svg-path-0.1.0.tgz",[m
+[36m@@ -3133,6 +3146,14 @@[m
+       "resolved": "https://registry.npmjs.org/process-nextick-args/-/process-nextick-args-2.0.1.tgz",[m
+       "integrity": "sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag=="[m
+     },[m
+[32m+[m[32m    "properties-reader": {[m
+[32m+[m[32m      "version": "1.0.0",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/properties-reader/-/properties-reader-1.0.0.tgz",[m
+[32m+[m[32m      "integrity": "sha512-bTjPVya6wFErwwOP3CasaRoyZ7n6sAt/MMJnDxBp3As7h2J19vmjCZX+Iw7YV0TqBPcA8i/Df/rxiCNutzEXZQ==",[m
+[32m+[m[32m      "requires": {[m
+[32m+[m[32m        "mkdirp": "~0.5.1"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+     "protocol-buffers-schema": {[m
+       "version": "3.4.0",[m
+       "resolved": "https://registry.npmjs.org/protocol-buffers-schema/-/protocol-buffers-schema-3.4.0.tgz",[m
+[1mdiff --git a/package.json b/package.json[m
+[1mindex c4b929f..66e3436 100644[m
+[1m--- a/package.json[m
+[1m+++ b/package.json[m
+[36m@@ -7,7 +7,9 @@[m
+     "body-parser": "^1.18.2",[m
+     "express": "^4.16.2",[m
+     "influx": "5.5.1",[m
+[31m-    "plotly.js": "^1.39.4"[m
+[32m+[m[32m    "node-fetch": "^2.6.0",[m
+[32m+[m[32m    "plotly.js": "^1.39.4",[m
+[32m+[m[32m    "properties-reader": "^1.0.0"[m
+   },[m
+   "devDependencies": {},[m
+   "scripts": {[m

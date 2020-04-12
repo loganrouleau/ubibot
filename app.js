@@ -1,19 +1,24 @@
 const bodyParser = require("body-parser");
 const express = require("express");
+const fetch = require("node-fetch");
 const Influx = require("influx");
 const net = require("net");
 const path = require("path");
+const PropertiesReader = require("properties-reader");
+const properties = PropertiesReader("app.properties");
 
 const influxDbAddress = "http://localhost:8086";
 const testDb = "test";
 const testMeasurement = "bot_reading";
 const influx = new Influx.InfluxDB(influxDbAddress);
+const channelId = 12859;
+const apiReadKey = properties.get("api.read.key");
 
 const app = express();
 app.use(bodyParser.json());
 app.use(
   bodyParser.urlencoded({
-    extended: true
+    extended: true,
   })
 );
 app.use(express.static(path.join(__dirname, "public")));
@@ -21,7 +26,7 @@ app.set("port", 3000);
 
 initializeTestDb();
 
-setInterval(function() {
+setInterval(function () {
   run();
 }, 5000);
 
@@ -33,20 +38,33 @@ app.get("/api/temperature", (request, response) => {
   let statement = "select * from " + testDb + ".." + testMeasurement;
   influx
     .query(statement, { database: testDb })
-    .then(result => response.status(200).json(result))
-    .catch(error => response.status(500).json({ error }));
+    .then((result) => response.status(200).json(result))
+    .catch((error) => response.status(500).json({ error }));
 });
 
 async function run() {
   let data = await getReading();
-  await writeToDb(data);
+  console.log(data);
 }
 
-function getReading() {
+async function getReading() {
+  let data = await fetch(
+    "https://api.ubibot.io/channels/" +
+      channelId +
+      "/feeds.json?" +
+      new URLSearchParams({
+        api_key: apiReadKey,
+      })
+  );
+  let dataJson = await data.json();
+  return dataJson;
+}
+
+function getSerialReading() {
   return new Promise((resolve, reject) => {
     var socket = net.connect(5001, "localhost");
     socket.setEncoding("utf8");
-    socket.on("data", data => {
+    socket.on("data", (data) => {
       socket.destroy();
       resolve(data);
     });
@@ -66,8 +84,8 @@ async function writeToDb(data) {
         measurement: testMeasurement,
         fields: fields,
         //timestamp: timestamp
-        timestamp: Date.now() * 1000000
-      }
+        timestamp: Date.now() * 1000000,
+      },
     ],
     { database: testDb }
   );
@@ -90,9 +108,9 @@ async function initializeTestDb() {
       acce_yval: Influx.FieldType.FLOAT,
       acce_zval: Influx.FieldType.FLOAT,
       mag_val: Influx.FieldType.FLOAT,
-      ext_temp_val: Influx.FieldType.FLOAT
+      ext_temp_val: Influx.FieldType.FLOAT,
     },
-    tags: []
+    tags: [],
   });
 }
 
