@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  influxdb:
+    image: influxdb:1.8.0
+    volumes:
+      - influx-data:/var/lib/influxdb
+    ports:
+      - "8086:8086"
+  chronograf:
+    image: chronograf:1.8.4
+    environment:
+      INFLUXDB_URL: http://influxdb:8086
+    ports:
+      - "8888:8888"
+    links:
+      - influxdb
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    links:
+      - influxdb
+
+volumes:
+  influx-data:
+  grafana-data:

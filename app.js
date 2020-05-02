@@ -31,7 +31,7 @@ app.use(
   })
 );
 app.use(express.static(path.join(__dirname, "public")));
-app.set("port", 3000);
+app.set("port", 3001);
 
 initializeTestDb();
 
