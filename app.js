@@ -1,12 +1,7 @@
-const bodyParser = require("body-parser");
-const express = require("express");
 const fetch = require("node-fetch");
 const Influx = require("influx");
-const net = require("net");
-const path = require("path");
 const PropertiesReader = require("properties-reader");
 const properties = PropertiesReader("app.properties");
-
 const influxDbAddress = "http://localhost:8086";
 const testDb = "test";
 const testMeasurement = "bot_reading";
@@ -23,34 +18,12 @@ const fieldName = {
   field6: "mag_val",
 };
 
-const app = express();
-app.use(bodyParser.json());
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-);
-app.use(express.static(path.join(__dirname, "public")));
-app.set("port", 3001);
-
 initializeTestDb();
 
 run();
 setInterval(function () {
   run();
 }, 10000);
-
-app.listen(app.get("port"), () => {
-  console.log(`Listening on ${app.get("port")}.`);
-});
-
-app.get("/api/temperature", (request, response) => {
-  let statement = "select * from " + testDb + ".." + testMeasurement;
-  influx
-    .query(statement, { database: testDb })
-    .then((result) => response.status(200).json(result))
-    .catch((error) => response.status(500).json({ error }));
-});
 
 async function run() {
   let data = await getReading();
@@ -71,7 +44,7 @@ async function getReading() {
 }
 
 async function writeToDb(data) {
-  let fields = data.feeds[2];
+  let fields = data.feeds[0];
   let timestamp = Date.parse(fields.created_at) * 1000000;
   delete fields.created_at;
 
@@ -85,8 +58,7 @@ async function writeToDb(data) {
       {
         measurement: testMeasurement,
         fields: fields,
-        timestamp: timestamp,
-        //timestamp: Date.now() * 1000000,
+        timestamp: timestamp
       },
     ],
     { database: testDb }
@@ -94,8 +66,6 @@ async function writeToDb(data) {
 }
 
 async function initializeTestDb() {
-  await dropTestDb();
-  await influx.createDatabase(testDb);
   influx.addSchema({
     database: testDb,
     measurement: testMeasurement,
@@ -113,24 +83,5 @@ async function initializeTestDb() {
       ext_temp_val: Influx.FieldType.FLOAT,
     },
     tags: [],
-  });
-}
-
-async function dropTestDb() {
-  let names = await influx.getDatabaseNames();
-  if (names.includes(testDb)) {
-    await influx.dropDatabase(testDb);
-  }
-}
-
-function getSerialReading() {
-  return new Promise((resolve, reject) => {
-    var socket = net.connect(5001, "localhost");
-    socket.setEncoding("utf8");
-    socket.on("data", (data) => {
-      socket.destroy();
-      resolve(data);
-    });
-    socket.write('{"command":"CheckSensors"}');
   });
 }
