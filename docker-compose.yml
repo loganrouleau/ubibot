@@ -23,6 +23,10 @@ services:
       - "3000:3000"
     links:
       - influxdb
+  datacollector:
+    build: ./
+    links:
+      - influxdb
 
 volumes:
   influx-data:
