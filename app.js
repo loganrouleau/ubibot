@@ -8,6 +8,7 @@ const testMeasurement = "bot_reading3";
 const influx = new Influx.InfluxDB(influxDbAddress);
 const channelId = 12859;
 const apiReadKey = properties.get("api.read.key");
+const openWeatherMapKey = properties.get("openweathermap.api.key");
 const fieldName = {
   created_at: "timestamp",
   field1: "temp_val",
@@ -18,6 +19,7 @@ const fieldName = {
   field6: "mag_val",
 };
 
+let weatherData;
 let mostRecentWrite;
 start();
 
@@ -27,14 +29,31 @@ async function start() {
     { database: testDb }
   );
   if (mostRecentWrite.length === 0) {
-    mostRecentWrite = new Date(Date.now() - 3 * 3600 * 1000);
+    mostRecentWrite = new Date(Date.now() - 1 * 3600 * 1000);
   } else {
     mostRecentWrite = Date.parse(mostRecentWrite[0].time);
   }
+  updateWeather();
+  setInterval(function () {
+    updateWeather();
+  }, 15 * 60000);
   run();
   setInterval(function () {
     run();
-  }, 60000);
+  }, 15 * 60000);
+}
+
+async function updateWeather() {
+  let data = await fetch(
+    "https://api.openweathermap.org/data/2.5/weather?" +
+      new URLSearchParams({
+        appid: openWeatherMapKey,
+        q: "vancouver",
+        units: "metric",
+      })
+  );
+  weatherData = await data.json();
+  console.log("Weather updated");
 }
 
 async function run() {
@@ -73,6 +92,13 @@ async function writeToDb(data) {
       row[fieldName[oldKey]] = row[oldKey];
       delete row[oldKey];
     });
+    if (weatherData && weatherData.main) {
+      row.outside_temp = weatherData.main.temp;
+      row.outside_humidity = weatherData.main.humidity;
+      row.air_pressure = weatherData.main.pressure;
+      row.wind_speed = weatherData.wind.speed;
+      row.wind_direction = weatherData.wind.deg;
+    }
     console.log(new Date(timestamp).toString() + " " + JSON.stringify(row));
     await influx.writePoints(
       [
