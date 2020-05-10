@@ -1,8 +1,8 @@
 FROM node:12
 
 WORKDIR /app
-COPY package*.json /app
+COPY package*.json /app/
 RUN npm install
-COPY app.js /app
+COPY app.js app.properties /app/
 
-CMD [ "node", "app.js" ]
+ENTRYPOINT [ "node", "app.js" ]

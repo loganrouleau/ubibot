@@ -18,9 +18,11 @@ const fieldName = {
   field5: "rssi",
   field6: "mag_val",
 };
+const args = process.argv.slice(2); // [catch up time (minutes), ubibot polling interval (minutes)]
 
 let weatherData;
 let mostRecentWrite;
+checkArgs();
 start();
 
 async function start() {
@@ -29,18 +31,18 @@ async function start() {
     { database: testDb }
   );
   if (mostRecentWrite.length === 0) {
-    mostRecentWrite = new Date(Date.now() - 1 * 3600 * 1000);
+    mostRecentWrite = new Date(Date.now() - args[0] * 60000);
   } else {
     mostRecentWrite = Date.parse(mostRecentWrite[0].time);
   }
   updateWeather();
   setInterval(function () {
     updateWeather();
-  }, 15 * 60000);
+  }, args[1] * 60000);
   run();
   setInterval(function () {
     run();
-  }, 15 * 60000);
+  }, args[1] * 60000);
 }
 
 async function updateWeather() {
@@ -110,5 +112,14 @@ async function writeToDb(data) {
       ],
       { database: testDb, precision: "ms" }
     );
+  }
+}
+
+function checkArgs() {
+  if (args.length != 2) {
+    console.log(
+      "ERROR: Please provide 2 arguments, catch up time (min) and ubibot polling interval (min)"
+    );
+    process.exit(1);
   }
 }
