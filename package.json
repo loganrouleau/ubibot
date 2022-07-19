@@ -9,7 +9,7 @@
     "influx": "5.5.1",
     "node-fetch": "^2.6.0",
     "plotly.js": "^1.39.4",
-    "properties-reader": "^1.0.0"
+    "properties-reader": "^2.2.0"
   },
   "devDependencies": {},
   "scripts": {
