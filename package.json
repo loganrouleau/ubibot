@@ -5,7 +5,7 @@
   "main": "script.js",
   "dependencies": {
     "body-parser": "^1.18.2",
-    "express": "^4.16.2",
+    "express": "^4.17.3",
     "influx": "5.5.1",
     "node-fetch": "^2.6.0",
     "plotly.js": "^1.39.4",
